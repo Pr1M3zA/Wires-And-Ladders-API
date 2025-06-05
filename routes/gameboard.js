@@ -55,7 +55,6 @@ app.post('/user', async (req, res) => {
     try {
         db = await connect();
         const { username, first_name, last_name, email, password, profile_image } = req.body;
-        console.log(profile_image.length)
         const hashPassword = bcrypt.hashSync(password, saltRounds);
         let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', ?)`;
         const [result] = await db.execute(query, [profile_image]);
