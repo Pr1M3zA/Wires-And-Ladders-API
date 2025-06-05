@@ -49,14 +49,15 @@ app.get('/user', checkToken, async (req, res) => {
 
 
 app.post('/user', async (req, res) => {
+    console.log('add user')
     let db;
     const saltRounds = 10;
     try {
         db = await connect();
         const { username, first_name, last_name, email, password, profile_image } = req.body;
+        console.log(profile_image.length)
         const hashPassword = bcrypt.hashSync(password, saltRounds);
-        query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', ?)`;
-        console.log(query)
+        let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', ?)`;
         const [result] = await db.execute(query, [profile_image]);
         res.status(200).json(result)
     } catch(err) {
@@ -66,6 +67,31 @@ app.post('/user', async (req, res) => {
         if (db) await db.end();
     }
 });
+
+
+app.put('/user', checkToken, async (req, res) => { 
+    let db;
+    try{
+        db = await connect();
+        const { first_name, last_name, password, profile_image } = req.body;
+        const idUser = req.idUser;
+        let query = `UPDATE users SET first_name='${first_name}', last_name='${last_name}', profile_image='${profile_image}'`
+        if(password.length > 0) {
+            const saltRounds = 10;
+            const hashPassword = bcrypt.hashSync(password, salt)
+            query += `, password='${hashPassword}'`
+        }
+        query += ` WHERE id=${idUser}`
+        const [result] = await db.execute(query);
+        res.status(200).json({result})
+    } catch(err) {
+        return res.status(500).json({message: db ? err.sqlMessage : "DB connection issue"}) 
+    } finally {
+        if(db) await db.end();
+    }
+});
+
+
 
 app.post('/login', async (req, res) => { 
     let db;
