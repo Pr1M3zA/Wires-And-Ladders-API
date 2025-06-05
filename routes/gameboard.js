@@ -35,7 +35,7 @@ app.get('/user', checkToken, async (req, res) => {
     try{
         //console.log(req.params)
         db = await connect();
-        const query = `SELECT id, username, first_name, last_name, email, profile_image FROM users WHERE id=${req.idUser}`;
+        const query = `SELECT id, username, first_name, last_name, email, profile_image, IFNULL(isAdmin,0) isAdmin FROM users WHERE id=${req.idUser}`;
         const [userRow] = await db.execute(query);
         if(userRow.length === 0)
             throw new Error('No se encontró el usuario');
@@ -83,7 +83,7 @@ app.put('/user', checkToken, async (req, res) => {
         }
         query += ` WHERE id=${idUser}`
         const [result] = await db.execute(query);
-        res.status(200).json({result})
+        res.status(200).json(result)
     } catch(err) {
         return res.status(500).json({message: db ? err.sqlMessage : "DB connection issue"}) 
     } finally {
