@@ -126,7 +126,6 @@ app.post('/send-reset-code', async (req, res) => {
 		const query = `SELECT id, first_name, last_name, email FROM users WHERE username ='${identifier}' OR email='${identifier}'`;
 		const [rows] = await db.execute(query);
 		if (rows.length > 0) {
-			console.log(rows[0])
 			idUser = rows[0].id
 			email = rows[0].email
 			const code = makeCode()
@@ -163,7 +162,7 @@ app.post('/send-reset-code', async (req, res) => {
 		else
 			res.status(404).json({ message: 'El usuario no existe' })
 	} catch (err) {
-		return res.status(500).json({ message: err.message })
+		return res.status(500).json({ err })
 	} finally {
 		if (db)
 			db.end();
