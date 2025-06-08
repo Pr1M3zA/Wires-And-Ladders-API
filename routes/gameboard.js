@@ -1,12 +1,9 @@
+import nodemailer from 'nodemailer';
 import express from "express";
 import cors from 'cors'
-import { Resend } from "resend";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { connect } from './../db.js'
-
-
-const resend = new Resend(process.env.MAIL_APIKEY);
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -129,32 +126,51 @@ app.post('/send-reset-code', async (req, res) => {
 			idUser = rows[0].id
 			email = rows[0].email
 			const code = makeCode()
-			const { data, error } = await resend.emails.send({
-				from: 'Wires and Ladder Support <WiresAndLadders@resend.dev>',
-				to: [email],
+
+			// Create a transporter object
+			const transporter = nodemailer.createTransport({
+				host: 'smtp.gmail.com',
+				port: 587,
+				secure: false, // use false for STARTTLS; true for SSL on port 465
+				auth: {
+					user: process.env.MAIL_ACCOUNT,
+					pass: process.env.MAIL_APIKEY,
+				}
+			});
+
+			// Configure the mailoptions object
+			const mailOptions = {
+				from: "Wires and Ladder Support <wiresandladders@gmail.com>",
+				to: email,
 				subject: 'Recuperación de Contraseña - Wires and Ladder',
 				html: `
-                        <p>Estimado(a) ${rows[0].first_name}:</p>
-                        <p></p>
-                        <p>Ha recibido este correo, ya que solicitó recuperar la contraseña de nuestra aplicación 
-                            <strong>Wires and Ladders</strong>
-                        </p>
-                        <p></p>
-                        <p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de recuperación de contraseña:</p>
-                        <p></p>
-                        <h1><strong><center>${code}</center></strong></h1>
-                        <p></p>
-                        <p>Luego de introducir el código, podrá establecer una nueva contraseña.</p>
-                        <p></p>
-                        <p>Saludos cordiales!</p>
-                        <p></p>
-                        <p><strong>Wires and Ladders</strong></p>
-                    `,
+					<p>Estimado(a) ${rows[0].first_name}:</p>
+					<p></p>
+					<p>Ha recibido este correo, ya que solicitó recuperar la contraseña de nuestra aplicación 
+							<strong>Wires and Ladders</strong>
+					</p>
+					<p></p>
+					<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de recuperación de contraseña:</p>
+					<p></p>
+					<h1><strong><center>${code}</center></strong></h1>
+					<p></p>
+					<p>Luego de introducir el código, podrá establecer una nueva contraseña.</p>
+					<p></p>
+					<p>Saludos cordiales!</p>
+					<p></p>
+					<p><strong>Wires and Ladders</strong></p>
+					`,
+			};
+			
+			// Send the email
+			transporter.sendMail(mailOptions, function(error, info){
+				if (error) {
+					console.log('Error:', error);
+					throw new Error(error)
+				} else {
+					console.log('Email sent: ', info.response);
+				}
 			});
-			if (error) {
-				console.log(error)
-				throw new Error(error);
-			}
 			const hashedCode = bcrypt.hashSync(code, saltRounds);
 			await db.execute(`UPDATE users SET code_pass_recover = '${hashedCode}' WHERE id = ${idUser}`)
 			res.status(200).json({ email: email, message: 'Codigo enviado correctamente al correo electrónico' })
@@ -162,7 +178,7 @@ app.post('/send-reset-code', async (req, res) => {
 		else
 			res.status(404).json({ message: 'El usuario no existe' })
 	} catch (err) {
-		return res.status(500).json({ err })
+		return res.status(500).json(err)
 	} finally {
 		if (db)
 			db.end();
@@ -244,8 +260,6 @@ app.post('/game-stats', checkToken, async (req, res) => {
 		if (db) await db.end();
 	}
 
-
-
 });
 
 function makeCode() {
@@ -273,4 +287,3 @@ function checkToken(req, res, next) {
 }
 
 export { app }
-

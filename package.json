@@ -17,8 +17,7 @@
     "gitignore": "^0.7.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.13.0",
-    "resend": "^4.5.1",
-    "socket.io": "^4.8.1"
+    "nodemailer": "^7.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
