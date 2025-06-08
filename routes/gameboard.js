@@ -130,7 +130,7 @@ app.post('/send-reset-code', async (req, res) => {
 			email = rows[0].email
 			const code = makeCode()
 			const { data, error } = await resend.emails.send({
-				from: 'Wires and Ladder Support <wireladder@resend.dev>',
+				from: 'Wires and Ladder Support <wireladder@wiresandladder.com>',
 				to: [email],
 				subject: 'Recuperación de Contraseña - Wires and Ladder',
 				html: `
