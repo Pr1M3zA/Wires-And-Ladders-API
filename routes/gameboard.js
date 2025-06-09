@@ -53,7 +53,7 @@ app.post('/user', async (req, res) => {
 		db = await connect();
 		const { username, first_name, last_name, email, password, profile_image } = req.body;
 		const hashPassword = bcrypt.hashSync(password, saltRounds);
-		let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', '${profile_image}')`;
+		let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', ${profile_image})`;
 		const [result] = await db.execute(query);
 		res.status(200).json(result)
 	} catch (err) {
@@ -71,7 +71,7 @@ app.put('/user', checkToken, async (req, res) => {
 		db = await connect();
 		const { first_name, last_name, password, profile_image } = req.body;
 		const idUser = req.idUser;
-		let query = `UPDATE users SET first_name='${first_name}', last_name='${last_name}', profile_image='${profile_image}'`
+		let query = `UPDATE users SET first_name='${first_name}', last_name='${last_name}', profile_image=${profile_image}`
 		if (password.length > 0) {
 			const saltRounds = 10;
 			const hashPassword = bcrypt.hashSync(password, salt)
