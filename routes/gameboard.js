@@ -32,7 +32,7 @@ app.get('/user', checkToken, async (req, res) => {
 	try {
 		//console.log(req.params)
 		db = await connect();
-		const query = `SELECT id, username, first_name, last_name, email, profile_image, IFNULL(isAdmin,0) isAdmin FROM users WHERE id=${req.idUser}`;
+		const query = `SELECT id, username, first_name, last_name, email, profile_image, IFNULL(isAdmin,0) isAdmin, id_dice, id_board FROM users WHERE id=${req.idUser}`;
 		const [userRow] = await db.execute(query);
 		if (userRow.length === 0)
 			throw new Error('No se encontró el usuario');
@@ -53,7 +53,7 @@ app.post('/user', async (req, res) => {
 		db = await connect();
 		const { username, first_name, last_name, email, password, profile_image } = req.body;
 		const hashPassword = bcrypt.hashSync(password, saltRounds);
-		let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', ${profile_image})`;
+		let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', '${profile_image}')`;
 		const [result] = await db.execute(query);
 		res.status(200).json(result)
 	} catch (err) {
@@ -71,7 +71,7 @@ app.put('/user', checkToken, async (req, res) => {
 		db = await connect();
 		const { first_name, last_name, password, profile_image } = req.body;
 		const idUser = req.idUser;
-		let query = `UPDATE users SET first_name='${first_name}', last_name='${last_name}', profile_image=${profile_image}`
+		let query = `UPDATE users SET first_name='${first_name}', last_name='${last_name}', profile_image='${profile_image}'`
 		if (password.length > 0) {
 			const saltRounds = 10;
 			const hashPassword = bcrypt.hashSync(password, salt)
@@ -261,6 +261,67 @@ app.post('/game-stats', checkToken, async (req, res) => {
 	}
 
 });
+
+app.get('/dices', async (req, res) => {
+	let db;
+	try {
+
+		db = await connect();
+		const [rows] = await db.query('SELECT id, dice_name, color_faceup, color_faceleft, color_faceright, color_dots, color_border, border_width, scale FROM dices');
+		res.status(200).json(rows);
+	} catch (err) {
+		console.error('Ocurrió un error al obtener los dados');
+		res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" });
+	} finally {
+		if (db) await db.end();
+	}
+});
+
+
+app.get('/education', async (req, res) => {
+	let db;
+	try {
+
+		db = await connect();
+		const [rows] = await db.query('SELECT id, generation, theme, information, question, answer_1, answer_2, answer_3, answer_4, answer_ok FROM education');
+		res.status(200).json(rows);
+	} catch (err) {
+		console.error('Ocurrió un error al obtener los datos de educación');
+		res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" });
+	} finally {
+		if (db) await db.end();
+	}
+});
+
+
+app.get('/tiles/:board', async (req, res) => {
+	let db;
+	try {
+		db = await connect();
+		const [rows] = await db.query(`SELECT t.id, t.num_tile, t.pos_x, t.pos_y, t.tile_type, t.rotation, t.radius, t.border_width, tt.effect_name FROM tiles t INNER JOIN tile_types tt ON t.tile_type=tt.id WHERE id_board=${req.params.board} ORDER BY t.Num_Tile`);
+		res.status(200).json(rows);
+	} catch (err) {
+		console.error('Ocurrió un error al obtener las casillas del tablero');
+		res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" });
+	} finally {
+		if (db) await db.end();
+	}
+});
+
+app.get('/shortcuts/:board', async (req, res) => {
+	let db;
+	try {
+		db = await connect();
+		const [rows] = await db.query(`SELECT from_tile, to_tile FROM shortcuts WHERE id_board=${req.params.board}`);
+		res.status(200).json(rows);
+	} catch (err) {
+		console.error('Ocurrió un error al obtener los atajos del tablero');
+		res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" });
+	} finally {
+		if (db) await db.end();
+	}
+});
+
 
 function makeCode() {
 	let codigo = '';
