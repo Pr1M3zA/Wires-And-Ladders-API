@@ -293,12 +293,27 @@ app.get('/education', async (req, res) => {
 	}
 });
 
+app.get('/boards', async (req, res) => {
+	let db;
+	try {
+		db = await connect();
+		const [rows] = await db.query(`SELECT b.id, board_name, width, height, rect_width, rect_height, path1, path2, color_rect, color_path1, color_path2, education FROM boards b INNER JOIN board_backgrounds bb ON b.id_background=bb.id`);
+		res.status(200).json(rows);
+	} catch (err) {
+		console.error('Ocurrió un error al obtener los tableros');
+		res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" });
+	} finally {
+		if (db) await db.end();
+	}
+});
+
+
 
 app.get('/tiles/:board', async (req, res) => {
 	let db;
 	try {
 		db = await connect();
-		const [rows] = await db.query(`SELECT t.id, t.num_tile, t.pos_x, t.pos_y, t.tile_type, t.rotation, t.radius, t.border_width, tt.effect_name FROM tiles t INNER JOIN tile_types tt ON t.tile_type=tt.id WHERE id_board=${req.params.board} ORDER BY t.Num_Tile`);
+		const [rows] = await db.query(`SELECT t.id_board, t.id, t.num_tile, t.pos_x, t.pos_y, t.tile_type, t.rotation, t.radius, t.border_width, tt.effect_name FROM tiles t INNER JOIN tile_types tt ON t.tile_type=tt.id WHERE id_board=${req.params.board} OR ${req.params.board}=0 ORDER BY t.id_board, t.Num_Tile`);
 		res.status(200).json(rows);
 	} catch (err) {
 		console.error('Ocurrió un error al obtener las casillas del tablero');
@@ -312,7 +327,7 @@ app.get('/shortcuts/:board', async (req, res) => {
 	let db;
 	try {
 		db = await connect();
-		const [rows] = await db.query(`SELECT from_tile, to_tile FROM shortcuts WHERE id_board=${req.params.board}`);
+		const [rows] = await db.query(`SELECT id_board, from_tile, to_tile FROM shortcuts WHERE id_board=${req.params.board} OR ${req.params.board}=0 ORDER BY id_board`);
 		res.status(200).json(rows);
 	} catch (err) {
 		console.error('Ocurrió un error al obtener los atajos del tablero');
