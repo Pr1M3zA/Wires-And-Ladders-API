@@ -2,7 +2,7 @@ import express from "express";
 import cors from 'cors'
 import { app as gameboardApp } from './routes/gameboard.js'
 import { app as dashBoardRoutes}  from './routes/dashboard.js'
-
+import { app as syncBoardRoutes} from './routes/syncboard.js'
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -11,6 +11,7 @@ app.use(cors());
 
 app.use('/', gameboardApp)
 app.use('/', dashBoardRoutes)
+app.use("/", syncBoardRoutes)
 
 app.get("/", (req, res) => res.send("MyAPI"));
 
