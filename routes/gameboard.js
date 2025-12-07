@@ -8,18 +8,17 @@ import { connect } from './../db.js'
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors());
-
+app.use(cors({origin: '*'}));
+app.options('*', cors()); // responder preflight
 
 app.get('/users', async (req, res) => {
 	let db;
 	try {
-
 		db = await connect();
 		const [rows] = await db.query('SELECT username, first_name, last_name, email, password, activo FROM users');
 		res.status(200).json(rows);
 	} catch (err) {
-		console.error('Ocurrió un error al obtener los usuarios');
+		//console.error('Ocurrió un error al obtener los usuarios');
 		res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" });
 	} finally {
 		if (db) await db.end();
@@ -46,18 +45,18 @@ app.get('/user', checkToken, async (req, res) => {
 
 
 app.post('/user', async (req, res) => {
-	console.log('add user')
+	//console.log('add user')
 	let db;
 	const saltRounds = 10;
 	try {
 		db = await connect();
 		const { username, first_name, last_name, email, password, profile_image } = req.body;
 		const hashPassword = bcrypt.hashSync(password, saltRounds);
-		let query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', '${profile_image}')`;
+		const query = `CALL SP_CREATE_USER('${username}', '${first_name}', '${last_name}', '${email}', '${hashPassword}', '${profile_image}')`;
 		const [result] = await db.execute(query);
 		res.status(200).json(result)
 	} catch (err) {
-		console.log(err)
+		//console.log(err)
 		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
 	} finally {
 		if (db) await db.end();
@@ -224,7 +223,7 @@ app.post('/reset-password', checkToken, async (req, res) => {
 		const [result] = await db.execute(`UPDATE users SET password = '${hashPassword}' WHERE id = ${req.idUser}`);
 		res.status(200).json(result)
 	} catch (err) {
-		console.log(err)
+		//console.log(err)
 		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
 	} finally {
 		if (db) await db.end();
@@ -237,7 +236,7 @@ app.post('/game-stats', checkToken, async (req, res) => {
 	try {
 		db = await connect();
 		const { startTime, endTime, winnerUserId, players } = req.body;
-		console.log(startTime, endTime, winnerUserId, players)
+		//console.log(startTime, endTime, winnerUserId, players)
 		const query = `INSERT INTO game_logs (date_time_start, date_time_end, winner_user_id) VALUES ('${startTime}', '${endTime}', ${winnerUserId})`
 		const [result] = await db.execute(query);
 		const gameLogId = result.insertId;
@@ -254,7 +253,7 @@ app.post('/game-stats', checkToken, async (req, res) => {
 		}
 		res.status(200).json({message: 'Juego registrado correctamente'})
 	} catch (err) {
-		console.log(err)
+		//console.log(err)
 		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
 	} finally {
 		if (db) await db.end();
@@ -262,6 +261,56 @@ app.post('/game-stats', checkToken, async (req, res) => {
 
 });
 
+app.post('/education', checkToken, async (req, res) => {
+	let db;
+	try {
+		db = await connect();
+		const { id, generation, theme, information, question, answer_1, answer_2, answer_3, answer_4, answer_ok } = req.body;
+		//let query = `CALL SP_ADD_EDUCATION_DATA('${generation}', '${theme}', '${information}', '${question}', '${answer_1}', '${answer_2}', '${answer_3}', '${answer_4}', ${answer_ok}, ${id})`;
+		const query = `INSERT INTO education (generation, theme, information, question, answer_1, answer_2, answer_3, answer_4, answer_ok) 
+						VALUES (${generation}, '${theme}', '${information}', '${question}', '${answer_1}', '${answer_2}', '${answer_3}', '${answer_4}', ${answer_ok})`;
+		const [result] = await db.execute(query);
+		res.status(200).json({message: 'Datos educativos agregados correctamente', id: result.insertId})
+	} catch (err) {
+		//console.log(err)
+		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
+	} finally {
+		if (db) await db.end();
+	}
+
+});
+
+app.put('/education', checkToken, async (req, res) => {
+	let db;
+	try {
+		db = await connect();
+		const { id, generation, theme, information, question, answer_1, answer_2, answer_3, answer_4, answer_ok } = req.body;
+		//let query = `CALL SP_EDIT_EDUCATION_DATA(${id}, ${generation}, '${theme}', '${information}', '${question}', '${answer_1}', '${answer_2}', '${answer_3}', '${answer_4}', ${answer_ok})`;
+		const query = `UPDATE education SET theme='${theme}', information='${information}', question='${question}', answer_1='${answer_1}', answer_2='${answer_2}', answer_3='${answer_3}', answer_4='${answer_4}', answer_ok=${answer_ok} WHERE id=${id}`;
+		const [result] = await db.execute(query);
+		res.status(200).json({message: 'Datos educativos modificados correctamente'})
+	} catch (err) {
+		//console.log(err)
+		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
+	} finally {
+		if (db) await db.end();
+	}
+});
+
+app.delete('/education/:id', checkToken, async (req, res) => {
+	let db;
+	try {
+		db = await connect();
+		const query = `DELETE FROM education WHERE id = ${req.params.id}`;
+		const [result] = await db.execute(query);
+		res.status(200).json({message: 'Datos educativos eliminados correctamente'})
+	} catch (err) {
+		//console.log(err)
+		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
+	} finally {
+		if (db) await db.end();
+	}
+});
 
 function makeCode() {
 	let codigo = '';
