@@ -128,18 +128,20 @@ app.post('/send-reset-code', async (req, res) => {
 
 			// Create a transporter object
 			const transporter = nodemailer.createTransport({
-				host: 'smtp.gmail.com',
-				port: 587,
-				secure: false, // use false for STARTTLS; true for SSL on port 465
+				service: 'gmail',
 				auth: {
+					type: 'OAuth2',
 					user: process.env.MAIL_ACCOUNT,
-					pass: process.env.MAIL_APIKEY,
+					clientId: process.env.MAIL_CLIENT_ID,
+					clientSecret: process.env.MAIL_CLIENT_SECRET,
+					refreshToken: process.env.MAIL_REFRESH_TOKEN					
 				}
 			});
+			console.log(transporter.host, transporter.port, transporter.options.auth.user, transporter.options.auth.pass)
 
 			// Configure the mailoptions object
 			const mailOptions = {
-				from: "Wires and Ladder Support <wiresandladders@gmail.com>",
+				from: `Wires and Ladder Support <${process.env.MAIL_ACCOUNT}>`,
 				to: email,
 				subject: 'Recuperación de Contraseña - Wires and Ladder',
 				html: `

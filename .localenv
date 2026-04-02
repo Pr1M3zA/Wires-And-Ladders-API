@@ -1,9 +1,9 @@
-PORT = ""
-SOCKET_PORT = ""
-DB_HOST = ''
-DB_PORT = ""
-DB_USER = ''
-DB_PASSWORD = ''
-DB_NAME = ''
+PORT = "3000"
+SOCKET_PORT = "3001"
+DB_HOST = 'localhost'
+DB_PORT = "3306"
+DB_USER = 'pris'
+DB_PASSWORD = 'mysql'
+DB_NAME = 'wireladders'
 SECRET = ''
 MAIL_APIKEY = ''
