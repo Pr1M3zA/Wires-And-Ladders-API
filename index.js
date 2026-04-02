@@ -13,7 +13,7 @@ app.use('/', gameboardApp)
 app.use('/', dashBoardRoutes)
 app.use("/", syncBoardRoutes)
 
-app.get("/", (req, res) => res.send("MyAPI"));
+app.get("/", (req, res) => res.send("My API for wires&ladders!"));
 
 
 app.set('port', process.env.PORT || 3000);

@@ -130,14 +130,15 @@ app.post('/send-reset-code', async (req, res) => {
 			const transporter = nodemailer.createTransport({
 				service: 'gmail',
 				auth: {
-					type: 'OAuth2',
 					user: process.env.MAIL_ACCOUNT,
+					pass: process.env.MAIL_APP_PASSWORD,
+					/*type: 'OAuth2',
 					clientId: process.env.MAIL_CLIENT_ID,
 					clientSecret: process.env.MAIL_CLIENT_SECRET,
-					refreshToken: process.env.MAIL_REFRESH_TOKEN					
+					refreshToken: process.env.MAIL_REFRESH_TOKEN
+					*/					
 				}
 			});
-			console.log(transporter.host, transporter.port, transporter.options.auth.user, transporter.options.auth.pass)
 
 			// Configure the mailoptions object
 			const mailOptions = {
